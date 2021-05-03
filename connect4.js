@@ -6,10 +6,12 @@
  */
 
 class Game {
-  constructor(height = 6 , width = 7) {
+  constructor(p1, p2, height = 6 , width = 7) {
+    this.players = [p1, p2];
     this.height = height;
     this.width = width;
-    this.currPlayer = 1;
+    this.currPlayer = p1;
+    this.gameOver = false;
     this.makeBoard();
     this.makeHtmlBoard();
   }
@@ -62,6 +64,11 @@ class Game {
    }
   }
 
+  cleanup() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+  }
+
   /** findSpotForCol: given column x, return top empty y (null if filled) */
 
   findSpotForCol(x) {
@@ -78,8 +85,8 @@ class Game {
   placeInTable(y, x) {
    const piece = document.createElement('div');
    piece.classList.add('piece');
-   piece.classList.add(`p${this.currPlayer}`);
    piece.style.top = -50 * (y + 2);
+   piece.style.backgroundColor = this.currPlayer.color;
 
    const spot = document.getElementById(`${y}-${x}`);
    spot.append(piece);
@@ -94,6 +101,10 @@ class Game {
   /** handleClick: handle click of column top to play piece */
 
   handleClick(evt) {
+  if(this.gameOver){
+    return;
+  }
+
     // get x from ID of clicked cell
    const x = +evt.target.id;
 
@@ -109,16 +120,16 @@ class Game {
   
    // check for win
    if (this.checkForWin()) {
-     return this.endGame(`Player ${this.currPlayer} won!`);
+     return this.endGame(`The ${this.currPlayer.color} player won!`);
    }
   
    // check for tie
    if (this.board.every(row => row.every(cell => cell))) {
-     return this.endGame('Tie!');
+     return this.endGame("It's a tie!");
    }
     
    // switch players
-   this.currPlayer = this.currPlayer === 1 ? 2 : 1;
+   this.currPlayer = this.currPlayer === this.players[0] ? this.players[1] : this.players[0];
   }
 
   /** checkForWin: check board cell-by-cell for "does a win start here?" */
@@ -150,6 +161,7 @@ class Game {
 
        // find winner (only checking each win-possibility as needed)
        if (_win(horiz) || _win(vert) || _win(diagDR) || _win(diagDL)) {
+         this.gameOver = true;
          return true;
        }
      }
@@ -158,7 +170,20 @@ class Game {
 
 }
 
+class Player {
+  constructor(color){
+    this.color = color;
+  }
+}
+
 const startBtn = document.getElementById('start');
+let currGame;
+
 startBtn.addEventListener('click', evt => {
-  new Game; 
+  if (currGame) {
+    currGame.cleanup()
+  }
+  let p1 = new Player(document.getElementById('player1').value);
+  let p2 = new Player(document.getElementById('player2').value);
+  currGame = new Game(p1, p2); 
 })  
